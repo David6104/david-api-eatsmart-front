@@ -1,56 +1,66 @@
-
 import './style.css';
 
 
-const plats = [
-  {
-    id: 1,
-    nom: "Anchois 23cm",
-    prix: 7.9,
-    description: "sauce tomate premium, origan, huile d'olive extra vierge, anchois, olive"
-  },
-  {
-    id: 2,
-    nom: "Emmental 23cm",
-    prix: 7.9,
-    description: "sauce tomate premium, origan, huile d'olive extra vierge, emmental, basilic, olive"
-  },
-  {
-    id: 3,
-    nom: "Margherita 23cm",
-    prix: 7.9,
-    description: "sauce tomate premium, origan, huile d'olive extra vierge, mozzarella"
+interface ArticleDTO {
+  idArticle: string;
+  nomArticle: string;
+  ingredientsArticle: string | null;
+  quantiteArticle: string | null;
+  PrixArticle: string;
+}
+
+
+function genererPlatHTML(art: ArticleDTO): string {
+
+  let nomAffiche: string = art.nomArticle;
+  
+  if (art.quantiteArticle !== null) {
+    nomAffiche = art.nomArticle + " " + parseInt(art.quantiteArticle) + "cm";
   }
-];
 
-
-console.log(plats);
-
-
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <header>
-    <h1>EatSmart - Carte du Restaurant</h1>
-  </header>
-  <main class="menu-container" id="menu">
-  </main>
-`;
-
-
-const menuContainer = document.querySelector('#menu');
-
-
-plats.forEach(plat => {
-
-  const card = document.createElement('div');
-  card.className = 'card';
-
-
-  card.innerHTML = `
-    <h3>${plat.nom}</h3>
-    <p>${plat.description}</p>
-    <p><strong>Prix : ${plat.prix}€</strong></p>
+  
+  return `
+    <div class="card">
+      <h3>${nomAffiche}</h3>
+      <p>${art.ingredientsArticle !== null ? art.ingredientsArticle : ""}</p>
+      <p><strong>Prix : ${art.PrixArticle}€</strong></p>
+    </div>
   `;
+}
 
 
-  menuContainer?.appendChild(card);
-});
+async function chargerDonnees(): Promise<ArticleDTO[]> {
+
+  const res = await fetch('http://localhost/David-api-eatsmart/articles');
+
+  return await res.json();
+}
+
+
+async function init() {
+
+  console.log("Chargement du menu");
+  
+
+  const menuData = await chargerDonnees();
+  console.log("Données reçues :", menuData);
+
+
+  const appDiv = document.querySelector<HTMLDivElement>('#app');
+
+
+  if (appDiv) {
+
+    appDiv.innerHTML = `
+      <header>
+        <h1>EatSmart - Carte du Restaurant</h1>
+      </header>
+      <main class="menu-container">
+        ${menuData.map((art) => genererPlatHTML(art)).join('')}
+      </main>
+    `;
+  }
+}
+
+
+init();
